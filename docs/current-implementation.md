@@ -1,0 +1,58 @@
+# 현재 구현
+
+## 현재까지 구현 범위
+
+현재 프로젝트는 다음 범위까지 구현되어 있습니다.
+
+- Claude Code에서 사용자 입력과 도구 사용을 추적
+- 프록시 서버(`mitmproxy`)를 통해 외부와의 통신 과정, 특히 LLM과의 통신 과정을 추적
+
+## 1. Claude Code에서 사용자 입력과 도구 사용을 추적하는 방법
+
+`auditor`는 모든 Claude Code 훅 이벤트에 대해 [`scripts/auditor.py`](/Users/sh_kim/Library/Mobile%20Documents/com~apple~CloudDocs/workspace/hookAgent/scripts/auditor.py)를 실행하게 해서 로그에 저장합니다.
+
+실행 시 다음 명령어를 사용해야 합니다.
+
+```bash
+claude --plugin-dir ./plugins/auditor
+```
+
+현재는 `--plugin-dir ./plugins/auditor`를 명시하지 않으면 플러그인으로 인식되지 않는 문제가 있습니다. 이 부분은 향후 개선 대상입니다.
+
+훅 설정은 [`plugins/auditor/hooks/hooks.json`](/Users/sh_kim/Library/Mobile%20Documents/com~apple~CloudDocs/workspace/hookAgent/plugins/auditor/hooks/hooks.json)에 있으며, 주요 Claude Code 이벤트에서 `scripts/auditor.py`를 호출합니다.
+
+현재 훅 대상 이벤트는 다음과 같습니다.
+
+- `SessionStart`
+- `SessionEnd`
+- `UserPromptSubmit`
+- `PreToolUse`
+- `PostToolUse`
+- `Stop`
+- `SubagentStop`
+- `PreCompact`
+- `Notification`
+
+현재 코드 기준으로는 훅 이벤트의 RAW 입력을 중심으로 기록하고 있으며, 이후 정제된 구조화 로그와 실시간 UI 연동으로 확장할 수 있습니다.
+
+## 2. 외부와의 통신 과정을 추적하는 방법
+
+외부와의 통신 과정은 `mitmproxy`를 설치한 뒤 프록시를 통해 Claude Code를 실행하여 추적합니다.
+
+실행 전 필요한 환경 변수와 실행 명령은 다음과 같습니다.
+
+```bash
+export HTTPS_PROXY=http://127.0.0.1:8080
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+claude
+```
+
+이 방식으로 특히 LLM과의 통신 과정을 관찰할 수 있습니다.
+
+## 현재 구현의 의미
+
+현재 단계의 구현은 아직 탐지와 제어를 자동으로 수행하는 수준은 아닙니다. 대신 다음을 가능하게 합니다.
+
+- 에이전트가 어떤 사용자 입력을 받았는지 추적
+- 에이전트가 어떤 시점에 어떤 도구를 사용하려 했는지 추적
+- 에이전트가 외부 LLM 또는 외부 시스템과 어떤 통신을 했는지 추적
