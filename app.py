@@ -17,6 +17,8 @@ DEFAULT_SERVER_URL = os.environ.get("HOOK_AGENT_SERVER_URL", "http://127.0.0.1:8
 GEMINI_EXTENSION_NAME = "gemini-auditor"
 CLAUDE_PLUGIN_DIR = ROOT_DIR / "plugins" / "auditor"
 GEMINI_EXTENSION_DIR = ROOT_DIR / "plugins" / GEMINI_EXTENSION_NAME
+CODEX_PLUGIN_DIR = ROOT_DIR / "plugins" / "codex-auditor"
+CODEX_PROJECT_DIR = ROOT_DIR / ".codex"
 
 
 def terminate_process(proc: subprocess.Popen[bytes] | None) -> None:
@@ -81,6 +83,11 @@ def build_agent_command(agent: str, extra_args: list[str]) -> list[str]:
         if configured:
             return [*split_command(configured), "--extensions", GEMINI_EXTENSION_NAME, *extra_args]
         return ["gemini", "--extensions", GEMINI_EXTENSION_NAME, *extra_args]
+    if agent == "codex":
+        configured = os.environ.get("HOOK_AGENT_CODEX_BIN", "").strip()
+        if configured:
+            return [*split_command(configured), *extra_args]
+        return ["codex", *extra_args]
     raise ValueError(f"Unsupported agent: {agent}")
 
 
@@ -98,6 +105,12 @@ def resolve_agent_command(command: list[str]) -> list[str]:
     raise FileNotFoundError(
         f"Could not find '{command[0]}' in PATH. Install it first or add it to PATH."
     )
+
+
+def ensure_codex_project_files() -> None:
+    CODEX_PROJECT_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(CODEX_PLUGIN_DIR / "config.toml", CODEX_PROJECT_DIR / "config.toml")
+    shutil.copyfile(CODEX_PLUGIN_DIR / "hooks.json", CODEX_PROJECT_DIR / "hooks.json")
 
 
 def main() -> int:
@@ -118,6 +131,16 @@ def main() -> int:
             return int(server_proc.returncode or 1)
 
         open_browser(server_url)
+
+        if agent == "codex":
+            if os.name == "nt":
+                print(
+                    "Codex hooks are not supported on Windows yet by Codex itself. "
+                    "Use Linux or macOS for codex hook integration.",
+                    file=sys.stderr,
+                )
+                return 1
+            ensure_codex_project_files()
 
         agent_command = build_agent_command(agent, extra_args)
         agent_command = resolve_agent_command(agent_command)
