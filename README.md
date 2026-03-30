@@ -1,10 +1,16 @@
+<div align="center">
+
 # hookAgent
 
-<!-- ![Preview](docs/img/Preview.png) -->
+<img width="500px" src="./docs/img/Preview.png">
 
-<img src="docs/img/Preview.png", height="200x">
+**HookAgent는 AI Agent의 사용자 입력, 추론, 도구 사용을 가로채고 감시하여 나쁜 행동을 탐지하고 제한합니다.**
 
-HookAgent는 AI Agent의 사용자 입력, 추론, 도구 사용을 가로채고 감시하여 나쁜 행동을 탐지하고 제한합니다.
+</div>
+
+- [미리보기 이미지 설명](./docs/img/Description.png)
+- [사용자의 수락을 기다리는 에이전트](./docs/img/WatingUserAccept.png)
+- [도구 사용을 거절했을때 에이전트](./docs/img/WhenDeny.png)
 
 ## 탐지 과정
 
